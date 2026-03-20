@@ -1,0 +1,33 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime env
+.env
+.env.*
+!.env.example
+
+# Dependencies
+**/node_modules/
+
+# Build output
+**/dist/
+**/.vite/
+
+# Local uploads / generated media
+backend/avatars/
+avatars/
+
+# Temp
+*.tmp
+*.temp
