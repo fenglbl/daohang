@@ -1,0 +1,232 @@
+<template>
+  <section class="auth-card settings-page">
+    <div class="section-header">
+      <h2>资料设置</h2>
+      <p>这里可以修改你的昵称、头像、邮箱、手机号，以及登录密码。</p>
+    </div>
+
+    <div class="settings-grid">
+      <div class="settings-panel">
+        <div class="panel-head">
+          <h3>基础资料</h3>
+          <p>头像会在浏览器侧先压缩到较合适尺寸，再随“保存资料”一起提交。</p>
+        </div>
+        <div class="form-grid">
+          <div class="avatar-upload-box">
+            <img v-if="avatarPreview" :src="avatarPreview" alt="avatar" class="settings-avatar-preview" />
+            <div v-else class="settings-avatar-preview settings-avatar-fallback">{{ avatarFallback }}</div>
+            <div class="avatar-upload-actions">
+              <input ref="avatarInputRef" class="avatar-file-input" type="file" accept="image/*" @change="handleAvatarChange" />
+              <button class="mini-btn" @click="triggerAvatarSelect">选择头像</button>
+              <small v-if="selectedAvatarFile" class="avatar-file-name">已选择：{{ selectedAvatarFile.name }}（{{ selectedAvatarSizeLabel }}）</small>
+              <small v-else class="avatar-file-name">支持 jpg/png/webp，原图将自动压缩，最终上传不超过约 1MB</small>
+            </div>
+          </div>
+
+          <input v-model="profileForm.username" class="text-input" disabled placeholder="登录账号" />
+          <input v-model="profileForm.nickname" class="text-input" placeholder="昵称" />
+          <input v-model="profileForm.email" class="text-input" placeholder="邮箱（可选）" />
+          <input v-model="profileForm.phone" class="text-input" placeholder="手机号（可选）" />
+          <div class="user-box">
+            <button class="primary-btn" @click="saveProfile">保存资料</button>
+            <button class="mini-btn" @click="$router.push('/')">返回首页</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-panel">
+        <div class="panel-head">
+          <h3>修改密码</h3>
+          <p>为了安全，需要先输入当前密码。</p>
+        </div>
+        <div class="form-grid">
+          <input v-model="passwordForm.oldPassword" class="text-input" type="password" placeholder="当前密码" />
+          <input v-model="passwordForm.newPassword" class="text-input" type="password" placeholder="新密码（至少 6 位）" />
+          <input v-model="passwordForm.confirmPassword" class="text-input" type="password" placeholder="确认新密码" />
+          <div class="user-box">
+            <button class="primary-btn" @click="savePassword">修改密码</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</template>
+
+<script setup>
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { api } from '../api'
+import { useAppStore } from '../stores/app'
+
+const router = useRouter()
+const store = useAppStore()
+const avatarInputRef = ref(null)
+const selectedAvatarFile = ref(null)
+const avatarPreview = ref('')
+
+const profileForm = reactive({
+  username: '',
+  nickname: '',
+  email: '',
+  phone: '',
+})
+
+const passwordForm = reactive({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: '',
+})
+
+const avatarFallback = computed(() => {
+  const name = profileForm.nickname || profileForm.username || '我'
+  return String(name).trim().slice(0, 1).toUpperCase()
+})
+
+const selectedAvatarSizeLabel = computed(() => {
+  const size = selectedAvatarFile.value?.size || 0
+  if (!size) return ''
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
+  return `${(size / 1024 / 1024).toFixed(2)} MB`
+})
+
+function resolveAvatarUrl(url) {
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url)) return url
+  return `http://127.0.0.1:3000${url}`
+}
+
+function fillProfile(user = {}) {
+  profileForm.username = user.username || ''
+  profileForm.nickname = user.nickname || ''
+  profileForm.email = user.email || ''
+  profileForm.phone = user.phone || ''
+  avatarPreview.value = resolveAvatarUrl(user.avatar_url || '')
+}
+
+async function loadProfile() {
+  if (!store.isLoggedIn) {
+    store.notify('请先登录', 'error')
+    router.push('/login')
+    return
+  }
+  await store.loadUserProfile()
+  fillProfile(store.currentUser || {})
+}
+
+function triggerAvatarSelect() {
+  avatarInputRef.value?.click()
+}
+
+function canvasToBlob(canvas, type, quality) {
+  return new Promise((resolve) => canvas.toBlob(resolve, type, quality))
+}
+
+async function compressImage(file) {
+  const imageUrl = URL.createObjectURL(file)
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const image = new Image()
+      image.onload = () => resolve(image)
+      image.onerror = reject
+      image.src = imageUrl
+    })
+
+    const maxSide = 1024
+    const scale = Math.min(1, maxSide / Math.max(img.width, img.height))
+    const width = Math.max(1, Math.round(img.width * scale))
+    const height = Math.max(1, Math.round(img.height * scale))
+
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(img, 0, 0, width, height)
+
+    let blob = await canvasToBlob(canvas, 'image/jpeg', 0.86)
+    if (!blob) throw new Error('图片压缩失败')
+
+    if (blob.size > 1024 * 1024) {
+      blob = await canvasToBlob(canvas, 'image/jpeg', 0.72)
+    }
+    if (!blob) throw new Error('图片压缩失败')
+
+    return new File([blob], `avatar-${Date.now()}.jpg`, { type: 'image/jpeg' })
+  } finally {
+    URL.revokeObjectURL(imageUrl)
+  }
+}
+
+async function handleAvatarChange(event) {
+  try {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (!String(file.type || '').startsWith('image/')) {
+      store.notify('请选择图片文件', 'error')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      store.notify('原图请控制在 10MB 以内', 'error')
+      return
+    }
+    const compressed = await compressImage(file)
+    selectedAvatarFile.value = compressed
+    avatarPreview.value = URL.createObjectURL(compressed)
+    store.notify('头像已压缩，保存资料后会一起上传')
+  } catch (error) {
+    store.notify(error.message || '图片处理失败', 'error')
+  }
+}
+
+async function saveProfile() {
+  try {
+    let uploadedAvatarUrl = null
+    if (selectedAvatarFile.value) {
+      const uploadRes = await api.uploadAvatar(selectedAvatarFile.value)
+      uploadedAvatarUrl = uploadRes.data.avatar_url
+    }
+
+    const result = await store.updateCurrentUserProfile({
+      nickname: profileForm.nickname.trim(),
+      email: profileForm.email.trim(),
+      phone: profileForm.phone.trim(),
+    })
+
+    fillProfile(result || store.currentUser)
+    if (uploadedAvatarUrl) {
+      avatarPreview.value = resolveAvatarUrl(uploadedAvatarUrl)
+      selectedAvatarFile.value = null
+      if (avatarInputRef.value) avatarInputRef.value.value = ''
+      await store.loadUserProfile()
+    }
+    store.notify(uploadedAvatarUrl ? '资料和头像都已保存' : '资料已保存')
+  } catch (error) {
+    store.notify(error.message || '保存失败', 'error')
+  }
+}
+
+async function savePassword() {
+  try {
+    if (!passwordForm.oldPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+      return store.notify('请填写完整密码信息', 'error')
+    }
+    await store.updateCurrentUserPassword({
+      oldPassword: passwordForm.oldPassword,
+      newPassword: passwordForm.newPassword,
+      confirmPassword: passwordForm.confirmPassword,
+    })
+    passwordForm.oldPassword = ''
+    passwordForm.newPassword = ''
+    passwordForm.confirmPassword = ''
+    store.notify('密码修改成功，请重新登录')
+    await store.logout()
+    router.push('/login')
+  } catch (error) {
+    store.notify(error.message || '修改密码失败', 'error')
+  }
+}
+
+onMounted(async () => {
+  await loadProfile()
+})
+</script>
