@@ -32,9 +32,10 @@
             <span>{{ Number(engine.is_enabled) === 1 ? '启用' : '停用' }}</span>
             <div class="table-actions">
               <button class="mini-btn" @click="openSearchEngineModal('edit', engine)">编辑</button>
-              <button class="danger-btn" @click="toggleSearchEngine(engine)">
+              <button class="mini-btn" @click="toggleSearchEngine(engine)">
                 {{ Number(engine.is_enabled) === 1 ? '停用' : '启用' }}
               </button>
+              <button class="danger-btn" @click="removeSearchEngine(engine.id)">删除</button>
             </div>
           </div>
         </div>
@@ -287,10 +288,22 @@ async function toggleSearchEngine(engine) {
   }
 }
 
+async function removeSearchEngine(id) {
+  if (!window.confirm('确认删除这个搜索引擎吗？')) return
+  try {
+    await store.removeSearchEngine(id)
+    await store.fetchSearchEngines(true)
+    store.notify('搜索引擎已删除')
+  } catch (e) {
+    store.notify(e.message || '删除失败', 'error')
+  }
+}
+
 onMounted(async () => {
   if (store.isLoggedIn) {
     await Promise.all([store.fetchNavData(), store.fetchSearchEngines(true)])
   }
 })
 </script>
+
 
