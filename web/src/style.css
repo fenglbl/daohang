@@ -246,7 +246,7 @@ button { cursor: pointer; color: inherit; }
 }
 .section-actions { justify-content: flex-end; }
 .group-actions { gap: 8px; justify-content: flex-end; margin-left: auto; }
-.table-actions { justify-content: flex-end; margin-left: auto; width: 100%; }
+.table-actions { justify-content: flex-end; margin-left: auto; }
 .link-actions { justify-content: flex-end; margin-bottom: 10px; }
 .form-grid { margin-top: 16px; flex-direction: column; align-items: stretch; }
 .admin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-bottom: 18px; }
@@ -316,14 +316,15 @@ button { cursor: pointer; color: inherit; }
 .link-card:hover { transform: translateY(-2px); border-color: rgba(59, 130, 246, 0.24); box-shadow: 0 12px 30px rgba(59, 130, 246, 0.08); }
 .table-like { display: flex; flex-direction: column; gap: 10px; }
 .table-row {
-  display: grid; grid-template-columns: 1fr 2fr 2fr 140px; gap: 12px; align-items: center;
+  display: grid; grid-template-columns: minmax(120px, 1fr) minmax(180px, 2fr) minmax(180px, 2fr) 160px; gap: 12px; align-items: center;
   padding: 12px 14px; border-radius: 14px; background: var(--panel-strong); border: 1px solid var(--line);
 }
 .table-row > :last-child {
   justify-self: end;
+  width: 100%;
 }
 .table-row-search-engine {
-  grid-template-columns: 120px 120px 1.8fr 80px 140px;
+  grid-template-columns: 120px 120px minmax(220px, 1.8fr) 80px 160px;
 }
 .empty-box { padding: 18px; border: 1px dashed var(--line); border-radius: 16px; }
 .auth-footnote { margin-top: 18px; text-align: center; }
