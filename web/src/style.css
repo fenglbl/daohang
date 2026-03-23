@@ -323,6 +323,9 @@ button { cursor: pointer; color: inherit; }
   justify-self: end;
   width: 100%;
 }
+.table-head > :last-child {
+  text-align: right;
+}
 .table-row-search-engine {
   grid-template-columns: 120px 120px minmax(220px, 1.8fr) 80px 160px;
 }
