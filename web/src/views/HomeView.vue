@@ -81,7 +81,7 @@
       <div>
         <h2>我的导航</h2>
         <p v-if="store.canEditPrivateNav">这里只显示你的私有导航，当前已开启编辑模式</p>
-        <p v-else>这里只显示你的私有导航。右上角开启编辑模式后，才会显示新增、编辑、启用停用和删除入口</p>
+        <p v-else>这里只显示你的私有导航。右上角开启编辑模式后，才会显示新增、编辑和删除入口</p>
       </div>
       <div v-if="store.canEditPrivateNav" class="section-actions">
         <button class="primary-btn" @click="openGroupModal('create')">添加分组</button>
@@ -90,27 +90,25 @@
     </div>
     <div v-if="store.loading && !filteredPrivateGroups.length" class="empty-box">个人导航加载中...</div>
     <div v-else class="group-list">
-      <article v-for="group in filteredPrivateGroups" :key="group.id" class="group-card" :class="{ 'item-disabled': !group.isEnabled }">
+      <article v-for="group in filteredPrivateGroups" :key="group.id" class="group-card">
         <div class="group-head">
           <div>
-            <h3>{{ group.title }} <small v-if="!group.isEnabled">（已停用）</small></h3>
+            <h3>{{ group.title }}</h3>
             <span>{{ group.links.length }} 个网址</span>
           </div>
           <div v-if="store.canEditPrivateNav" class="group-actions">
             <button class="mini-btn" @click="openGroupModal('edit', group)">编辑分组</button>
-            <button class="mini-btn" @click="toggleGroupEnabled(group)">{{ group.isEnabled ? '停用' : '启用' }}</button>
-            <button class="mini-btn danger-btn" @click="removeGroup(group.id)">彻底删除</button>
+            <button class="mini-btn danger-btn" @click="removeGroup(group.id)">删除分组</button>
           </div>
         </div>
         <div class="link-grid">
-          <div v-for="link in group.links" :key="link.id" class="private-link-shell" :class="[{ 'link-card-editable': store.canEditPrivateNav }, { 'item-disabled': !link.isEnabled }]">
+          <div v-for="link in group.links" :key="link.id" class="private-link-shell" :class="{ 'link-card-editable': store.canEditPrivateNav }">
             <div v-if="store.canEditPrivateNav" class="link-actions">
               <button class="mini-btn" @click="openLinkModal('edit', group, link)">编辑</button>
-              <button class="mini-btn" @click="toggleLinkEnabled(link)">{{ link.isEnabled ? '停用' : '启用' }}</button>
-              <button class="mini-btn danger-btn" @click="removeLink(link.id)">彻底删除</button>
+              <button class="mini-btn danger-btn" @click="removeLink(link.id)">删除</button>
             </div>
             <button class="link-card" :class="{ 'link-card-inner': store.canEditPrivateNav }" @click="openLink(link)">
-              <strong>{{ link.name }} <small v-if="!link.isEnabled">（已停用）</small></strong>
+              <strong>{{ link.name }}</strong>
               <span>{{ link.desc }}</span>
               <small>{{ currentUrl(link) }}</small>
             </button>
@@ -186,7 +184,7 @@ const themes = [{ label: '夜间', value: 'dark' }, { label: '白天', value: 'l
 const jumps = [{ label: '本地模式', value: 'local' }, { label: '外网模式', value: 'online' }]
 
 const filteredPublicGroups = computed(() => filterGroups(store.publicGroups, false))
-const filteredPrivateGroups = computed(() => filterGroups(store.privateGroups, true))
+const filteredPrivateGroups = computed(() => filterGroups(store.privateGroups, false))
 const displayName = computed(() => store.currentUser?.nickname || store.currentUser?.username || '我的账号')
 const avatarFallback = computed(() => String(displayName.value || '我').trim().slice(0, 1).toUpperCase())
 const resolvedAvatarUrl = computed(() => resolveAssetUrl(store.currentUser?.avatar_url || ''))
@@ -231,7 +229,6 @@ function filterGroups(groups, includeDisabled = false) {
 
 function currentUrl(link) { return store.jumpMode === 'local' ? link.urlLocal : link.urlOnline }
 function openLink(link) {
-  if (!link.isEnabled) return
   const url = currentUrl(link)
   if (!url) return
   window.open(url, '_blank')
@@ -359,30 +356,8 @@ async function submitLinkModal() {
   }
 }
 
-async function toggleLinkEnabled(link) {
-  const nextEnabled = !link.isEnabled
-  const ok = window.confirm(`确认${nextEnabled ? '启用' : '停用'}这个网址吗？`)
-  if (!ok) return
-  try {
-    await store.toggleLinkEnabled(link.id, nextEnabled)
-    store.notify(nextEnabled ? '导航已启用' : '导航已停用')
-  } catch (e) {
-    store.notify(e.message || '操作失败', 'error')
-  }
-}
-async function toggleGroupEnabled(group) {
-  const nextEnabled = !group.isEnabled
-  const ok = window.confirm(`确认${nextEnabled ? '启用' : '停用'}这个分组吗？`)
-  if (!ok) return
-  try {
-    await store.toggleGroupEnabled(group.id, nextEnabled)
-    store.notify(nextEnabled ? '分组已启用' : '分组已停用')
-  } catch (e) {
-    store.notify(e.message || '操作失败', 'error')
-  }
-}
 async function removeLink(id) {
-  if (!window.confirm('确认彻底删除这个网址吗？删除后将无法恢复。')) return
+  if (!window.confirm('确认删除这个网址吗？')) return
   try {
     await store.removeLink(id)
     store.notify('导航已删除')
@@ -391,7 +366,7 @@ async function removeLink(id) {
   }
 }
 async function removeGroup(id) {
-  if (!window.confirm('确认彻底删除这个分组吗？分组内的网址也会一起删除，且无法恢复。')) return
+  if (!window.confirm('确认删除这个分组吗？分组内的网址也会一起删除。')) return
   try {
     await store.removeGroup(id)
     store.notify('分组已删除')

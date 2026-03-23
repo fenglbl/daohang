@@ -137,8 +137,9 @@ router.put('/groups/:id/enabled', authMiddleware, async (req, res, next) => {
           SET is_enabled = ?
         WHERE id = ?
           AND is_deleted = 0
-          AND ((is_public = 0 AND user_id = ?) OR (is_public = 1 AND ? = 'admin'))`,
-      [enabledFlag, id, req.user.id, req.user.role],
+          AND is_public = 1
+          AND ? = 'admin'`,
+      [enabledFlag, id, req.user.role],
     )
 
     if (!result.affectedRows) return fail(res, '导航分组不存在或无权限操作', 404)
@@ -309,8 +310,9 @@ router.put('/links/:id/enabled', authMiddleware, async (req, res, next) => {
           SET is_enabled = ?
         WHERE id = ?
           AND is_deleted = 0
-          AND ((is_public = 0 AND user_id = ?) OR (is_public = 1 AND ? = 'admin'))`,
-      [enabledFlag, id, req.user.id, req.user.role],
+          AND is_public = 1
+          AND ? = 'admin'`,
+      [enabledFlag, id, req.user.role],
     )
 
     if (!result.affectedRows) return fail(res, '导航链接不存在或无权限操作', 404)
