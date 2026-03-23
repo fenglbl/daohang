@@ -1,8 +1,13 @@
 const API_BASE = 'http://127.0.0.1:3000/api'
 
+function getLocale() {
+  return localStorage.getItem('locale') || 'zh-CN'
+}
+
 async function request(path, options = {}) {
   const token = localStorage.getItem('token')
   const headers = {
+    'Accept-Language': getLocale(),
     ...(options.headers || {}),
   }
 
