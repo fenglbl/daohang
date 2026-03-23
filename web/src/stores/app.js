@@ -7,18 +7,22 @@ function mapNav(groups = [], links = []) {
     title: group.name,
     desc: group.description,
     sortOrder: Number(group.sort_order || 0),
-    isPublic: group.is_public === 1,
+    isPublic: Number(group.is_public) === 1,
+    isEnabled: Number(group.is_enabled ?? 1) === 1,
     links: links
       .filter((link) => Number(link.group_id) === Number(group.id))
       .map((link) => ({
         id: link.id,
+        groupId: link.group_id,
         name: link.title,
         desc: link.description,
         urlLocal: link.url_local,
         urlOnline: link.url_online,
         sortOrder: Number(link.sort_order || 0),
-        isPublic: link.is_public === 1,
-      })),
+        isPublic: Number(link.is_public) === 1,
+        isEnabled: Number(link.is_enabled ?? 1) === 1,
+      }))
+      .sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id),
   }))
 }
 
@@ -51,7 +55,7 @@ export const useAppStore = defineStore('app', {
     isAdmin: (state) => state.currentUser?.role === 'admin',
     isLoggedIn: (state) => !!state.token,
     canEditPrivateNav: (state) => !!state.token && state.currentUser?.role !== 'admin' && state.editMode,
-    publicGroups: (state) => state.showPublicNav ? state.navGroups.filter((item) => item.isPublic) : [],
+    publicGroups: (state) => (state.showPublicNav ? state.navGroups.filter((item) => item.isPublic) : []),
     privateGroups: (state) => state.navGroups.filter((item) => !item.isPublic),
     enabledSearchEngines: (state) => state.searchEngines.filter((item) => Number(item.is_enabled) === 1 || item.is_enabled === true),
   },
@@ -221,11 +225,15 @@ export const useAppStore = defineStore('app', {
       }
     },
     async addGroup(title, isPublic = false) {
-      await api.createGroup({ name: title, isPublic: isPublic ? 1 : 0 })
+      await api.createGroup({ name: title, isPublic: isPublic ? 1 : 0, isEnabled: 1 })
       await this.fetchNavData()
     },
     async updateGroup(groupId, payload) {
       await api.updateGroup(groupId, payload)
+      await this.fetchNavData()
+    },
+    async toggleGroupEnabled(groupId, isEnabled) {
+      await api.setGroupEnabled(groupId, isEnabled ? 1 : 0)
       await this.fetchNavData()
     },
     async removeGroup(groupId) {
@@ -240,11 +248,16 @@ export const useAppStore = defineStore('app', {
         urlLocal: link.urlLocal,
         urlOnline: link.urlOnline,
         isPublic: isPublic ? 1 : 0,
+        isEnabled: 1,
       })
       await this.fetchNavData()
     },
     async updateLink(linkId, payload) {
       await api.updateLink(linkId, payload)
+      await this.fetchNavData()
+    },
+    async toggleLinkEnabled(linkId, isEnabled) {
+      await api.setLinkEnabled(linkId, isEnabled ? 1 : 0)
       await this.fetchNavData()
     },
     async removeLink(linkId) {

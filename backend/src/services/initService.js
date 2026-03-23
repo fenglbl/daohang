@@ -51,7 +51,9 @@ async function ensureSearchEngineTable() {
 
 async function ensureSchema() {
   await safeAddColumn(`ALTER TABLE nav_groups ADD COLUMN is_public TINYINT NOT NULL DEFAULT 0 COMMENT '是否公共导航：1公共 0私有' AFTER user_id`)
+  await safeAddColumn(`ALTER TABLE nav_groups ADD COLUMN is_enabled TINYINT NOT NULL DEFAULT 1 COMMENT '是否启用：1启用 0停用' AFTER is_default`)
   await safeAddColumn(`ALTER TABLE nav_links ADD COLUMN is_public TINYINT NOT NULL DEFAULT 0 COMMENT '是否公共导航：1公共 0私有' AFTER user_id`)
+  await safeAddColumn(`ALTER TABLE nav_links ADD COLUMN is_enabled TINYINT NOT NULL DEFAULT 1 COMMENT '是否启用：1启用 0停用' AFTER sort_order`)
   await safeAddColumn(`ALTER TABLE user_settings ADD COLUMN show_public_nav TINYINT NOT NULL DEFAULT 1 COMMENT '是否显示公共导航：1显示 0隐藏' AFTER search_engine`)
   await ensureSearchEngineTable()
 }

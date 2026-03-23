@@ -81,6 +81,9 @@ export const api = {
   updateGroup(id, payload) {
     return request(`/nav/groups/${id}`, { method: 'PUT', body: JSON.stringify(payload) })
   },
+  setGroupEnabled(id, isEnabled) {
+    return request(`/nav/groups/${id}/enabled`, { method: 'PUT', body: JSON.stringify({ isEnabled }) })
+  },
   deleteGroup(id) {
     return request(`/nav/groups/${id}`, { method: 'DELETE' })
   },
@@ -92,6 +95,9 @@ export const api = {
   },
   updateLink(id, payload) {
     return request(`/nav/links/${id}`, { method: 'PUT', body: JSON.stringify(payload) })
+  },
+  setLinkEnabled(id, isEnabled) {
+    return request(`/nav/links/${id}/enabled`, { method: 'PUT', body: JSON.stringify({ isEnabled }) })
   },
   deleteLink(id) {
     return request(`/nav/links/${id}`, { method: 'DELETE' })

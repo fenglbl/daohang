@@ -3,7 +3,7 @@
     <div class="section-header section-header-inline">
       <div>
         <h2>管理页面</h2>
-        <p>管理员维护公共导航和搜索引擎配置，普通用户不进入这个页面。</p>
+        <p>管理员维护公共导航和搜索引擎配置，公共导航优先支持启用 / 停用，删除降级为危险操作</p>
       </div>
       <div v-if="store.isAdmin" class="section-actions">
         <button class="primary-btn" @click="openGroupModal('create')">新增公共分组</button>
@@ -12,7 +12,7 @@
       </div>
     </div>
 
-    <div v-if="!store.isAdmin" class="empty-box">只有管理员可以进入这个页面，请先登录管理员账号。</div>
+    <div v-if="!store.isAdmin" class="empty-box">只有管理员可以进入这个页面，请先登录管理员账号</div>
 
     <template v-else>
       <div class="admin-card">
@@ -41,27 +41,30 @@
         </div>
       </div>
 
-      <div class="admin-card" v-for="group in store.publicGroups" :key="group.id">
+      <div class="admin-card" v-for="group in store.publicGroups" :key="group.id" :class="{ 'item-disabled': !group.isEnabled }">
         <div class="group-head">
           <div>
-            <h3>{{ group.title }}</h3>
+            <h3>{{ group.title }} <small v-if="!group.isEnabled">（已停用）</small></h3>
             <span>{{ group.links.length }} 个公共网址</span>
           </div>
           <div class="group-actions">
             <button class="mini-btn" @click="openGroupModal('edit', group)">编辑分组</button>
-            <button class="mini-btn danger-btn" @click="removeGroup(group.id)">删除分组</button>
+            <button class="mini-btn" @click="toggleGroupEnabled(group)">{{ group.isEnabled ? '停用' : '启用' }}</button>
+            <button class="mini-btn danger-btn" @click="removeGroup(group.id)">彻底删除</button>
           </div>
         </div>
         <div v-if="!group.links.length" class="empty-box">当前分组还没有网址</div>
         <div v-else class="table-like">
-          <div class="table-row table-head"><span>名称</span><span>本地模式</span><span>外网模式</span><span>操作</span></div>
-          <div class="table-row" v-for="link in group.links" :key="link.id">
+          <div class="table-row table-head"><span>名称</span><span>本地模式</span><span>外网模式</span><span>状态</span><span>操作</span></div>
+          <div class="table-row" v-for="link in group.links" :key="link.id" :class="{ 'item-disabled': !link.isEnabled }">
             <span>{{ link.name }}</span>
             <span>{{ link.urlLocal }}</span>
             <span>{{ link.urlOnline }}</span>
+            <span>{{ link.isEnabled ? '启用' : '停用' }}</span>
             <div class="table-actions">
               <button class="mini-btn" @click="openLinkModal('edit', group, link)">编辑</button>
-              <button class="danger-btn" @click="removeLink(link.id)">删除</button>
+              <button class="mini-btn" @click="toggleLinkEnabled(link)">{{ link.isEnabled ? '停用' : '启用' }}</button>
+              <button class="danger-btn" @click="removeLink(link.id)">彻底删除</button>
             </div>
           </div>
         </div>
@@ -259,8 +262,30 @@ async function submitSearchEngineModal() {
   }
 }
 
+async function toggleGroupEnabled(group) {
+  const nextEnabled = !group.isEnabled
+  if (!window.confirm(`确认${nextEnabled ? '启用' : '停用'}这个公共分组吗？`)) return
+  try {
+    await store.toggleGroupEnabled(group.id, nextEnabled)
+    store.notify(nextEnabled ? '公共分组已启用' : '公共分组已停用')
+  } catch (e) {
+    store.notify(e.message || '操作失败', 'error')
+  }
+}
+
+async function toggleLinkEnabled(link) {
+  const nextEnabled = !link.isEnabled
+  if (!window.confirm(`确认${nextEnabled ? '启用' : '停用'}这个公共网址吗？`)) return
+  try {
+    await store.toggleLinkEnabled(link.id, nextEnabled)
+    store.notify(nextEnabled ? '公共网址已启用' : '公共网址已停用')
+  } catch (e) {
+    store.notify(e.message || '操作失败', 'error')
+  }
+}
+
 async function removeGroup(id) {
-  if (!window.confirm('确认删除这个公共分组吗？分组内的网址也会一起删除。')) return
+  if (!window.confirm('确认彻底删除这个公共分组吗？分组内的网址也会一起删除，且无法恢复。')) return
   try {
     await store.removeGroup(id)
     store.notify('公共分组已删除')
@@ -268,7 +293,7 @@ async function removeGroup(id) {
 }
 
 async function removeLink(id) {
-  if (!window.confirm('确认删除这个公共网址吗？')) return
+  if (!window.confirm('确认彻底删除这个公共网址吗？删除后将无法恢复。')) return
   try {
     await store.removeLink(id)
     store.notify('公共网址已删除')
@@ -305,5 +330,3 @@ onMounted(async () => {
   }
 })
 </script>
-
-
