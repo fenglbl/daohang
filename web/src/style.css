@@ -245,7 +245,8 @@ button { cursor: pointer; color: inherit; }
   display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
 }
 .section-actions { justify-content: flex-end; }
-.group-actions { gap: 8px; }
+.group-actions { gap: 8px; justify-content: flex-end; margin-left: auto; }
+.table-actions { justify-content: flex-end; margin-left: auto; width: 100%; }
 .link-actions { justify-content: flex-end; margin-bottom: 10px; }
 .form-grid { margin-top: 16px; flex-direction: column; align-items: stretch; }
 .admin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-bottom: 18px; }
@@ -317,6 +318,9 @@ button { cursor: pointer; color: inherit; }
 .table-row {
   display: grid; grid-template-columns: 1fr 2fr 2fr 140px; gap: 12px; align-items: center;
   padding: 12px 14px; border-radius: 14px; background: var(--panel-strong); border: 1px solid var(--line);
+}
+.table-row > :last-child {
+  justify-self: end;
 }
 .table-row-search-engine {
   grid-template-columns: 120px 120px 1.8fr 80px 140px;
