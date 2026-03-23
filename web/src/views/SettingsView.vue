@@ -1,15 +1,15 @@
 <template>
   <section class="auth-card settings-page">
     <div class="section-header">
-      <h2>资料设置</h2>
-      <p>这里可以修改你的昵称、头像、邮箱、手机号，以及登录密码。</p>
+      <h2>{{ t('settings.title') }}</h2>
+      <p>{{ t('settings.desc') }}</p>
     </div>
 
     <div class="settings-grid">
       <div class="settings-panel">
         <div class="panel-head">
-          <h3>基础资料</h3>
-          <p>头像会在浏览器侧先压缩到较合适尺寸，再随“保存资料”一起提交。</p>
+          <h3>{{ t('settings.basic') }}</h3>
+          <p>{{ t('settings.basicDesc') }}</p>
         </div>
         <div class="form-grid">
           <div class="avatar-upload-box">
@@ -17,54 +17,54 @@
             <div v-else class="settings-avatar-preview settings-avatar-fallback">{{ avatarFallback }}</div>
             <div class="avatar-upload-actions">
               <input ref="avatarInputRef" class="avatar-file-input" type="file" accept="image/*" @change="handleAvatarChange" />
-              <button class="mini-btn" @click="triggerAvatarSelect">选择头像</button>
-              <small v-if="selectedAvatarFile" class="avatar-file-name">已选择：{{ selectedAvatarFile.name }}（{{ selectedAvatarSizeLabel }}）</small>
-              <small v-else class="avatar-file-name">支持 jpg/png/webp，原图将自动压缩，最终上传不超过约 1MB</small>
+              <button class="mini-btn" @click="triggerAvatarSelect">{{ t('settings.chooseAvatar') }}</button>
+              <small v-if="selectedAvatarFile" class="avatar-file-name">{{ t('settings.avatarSelected', { name: selectedAvatarFile.name, size: selectedAvatarSizeLabel }) }}</small>
+              <small v-else class="avatar-file-name">{{ t('settings.avatarTip') }}</small>
             </div>
           </div>
 
           <div class="field-block">
-            <input v-model="profileForm.username" class="text-input" disabled placeholder="登录账号" />
+            <input v-model="profileForm.username" class="text-input" disabled :placeholder="t('settings.accountPlaceholder')" />
           </div>
           <div class="field-block">
-            <input v-model="profileForm.nickname" class="text-input" :class="{ 'input-invalid': profileErrors.nickname }" placeholder="昵称" @blur="validateNickname" />
+            <input v-model="profileForm.nickname" class="text-input" :class="{ 'input-invalid': profileErrors.nickname }" :placeholder="t('settings.nicknamePlaceholder')" @blur="validateNickname" />
             <small v-if="profileErrors.nickname" class="field-error">{{ profileErrors.nickname }}</small>
           </div>
           <div class="field-block">
-            <input v-model="profileForm.email" class="text-input" :class="{ 'input-invalid': profileErrors.email }" placeholder="邮箱（可选）" @blur="validateEmail" />
+            <input v-model="profileForm.email" class="text-input" :class="{ 'input-invalid': profileErrors.email }" :placeholder="t('settings.emailPlaceholder')" @blur="validateEmail" />
             <small v-if="profileErrors.email" class="field-error">{{ profileErrors.email }}</small>
           </div>
           <div class="field-block">
-            <input v-model="profileForm.phone" class="text-input" :class="{ 'input-invalid': profileErrors.phone }" placeholder="手机号（可选）" @blur="validatePhone" />
+            <input v-model="profileForm.phone" class="text-input" :class="{ 'input-invalid': profileErrors.phone }" :placeholder="t('settings.phonePlaceholder')" @blur="validatePhone" />
             <small v-if="profileErrors.phone" class="field-error">{{ profileErrors.phone }}</small>
           </div>
           <div class="user-box">
-            <button class="primary-btn" @click="saveProfile">保存资料</button>
-            <button class="mini-btn" @click="$router.push('/')">返回首页</button>
+            <button class="primary-btn" @click="saveProfile">{{ t('settings.saveProfile') }}</button>
+            <button class="mini-btn" @click="$router.push('/')">{{ t('common.backHome') }}</button>
           </div>
         </div>
       </div>
 
       <div class="settings-panel">
         <div class="panel-head">
-          <h3>修改密码</h3>
-          <p>为了安全，需要先输入当前密码。</p>
+          <h3>{{ t('settings.passwordTitle') }}</h3>
+          <p>{{ t('settings.passwordDesc') }}</p>
         </div>
         <div class="form-grid">
           <div class="field-block">
-            <input v-model="passwordForm.oldPassword" class="text-input" :class="{ 'input-invalid': passwordErrors.oldPassword }" type="password" placeholder="当前密码" @blur="validateOldPassword" />
+            <input v-model="passwordForm.oldPassword" class="text-input" :class="{ 'input-invalid': passwordErrors.oldPassword }" type="password" :placeholder="t('settings.oldPasswordPlaceholder')" @blur="validateOldPassword" />
             <small v-if="passwordErrors.oldPassword" class="field-error">{{ passwordErrors.oldPassword }}</small>
           </div>
           <div class="field-block">
-            <input v-model="passwordForm.newPassword" class="text-input" :class="{ 'input-invalid': passwordErrors.newPassword }" type="password" placeholder="新密码（至少 6 位）" @blur="validateNewPassword" />
+            <input v-model="passwordForm.newPassword" class="text-input" :class="{ 'input-invalid': passwordErrors.newPassword }" type="password" :placeholder="t('settings.newPasswordPlaceholder')" @blur="validateNewPassword" />
             <small v-if="passwordErrors.newPassword" class="field-error">{{ passwordErrors.newPassword }}</small>
           </div>
           <div class="field-block">
-            <input v-model="passwordForm.confirmPassword" class="text-input" :class="{ 'input-invalid': passwordErrors.confirmPassword }" type="password" placeholder="确认新密码" @blur="validateConfirmPassword" />
+            <input v-model="passwordForm.confirmPassword" class="text-input" :class="{ 'input-invalid': passwordErrors.confirmPassword }" type="password" :placeholder="t('settings.confirmNewPasswordPlaceholder')" @blur="validateConfirmPassword" />
             <small v-if="passwordErrors.confirmPassword" class="field-error">{{ passwordErrors.confirmPassword }}</small>
           </div>
           <div class="user-box">
-            <button class="primary-btn" @click="savePassword">修改密码</button>
+            <button class="primary-btn" @click="savePassword">{{ t('settings.savePassword') }}</button>
           </div>
         </div>
       </div>
@@ -77,9 +77,11 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../api'
 import { useAppStore } from '../stores/app'
+import { useI18n } from '../i18n'
 
 const router = useRouter()
 const store = useAppStore()
+const { t } = useI18n()
 const avatarInputRef = ref(null)
 const selectedAvatarFile = ref(null)
 const avatarPreview = ref('')
@@ -110,39 +112,39 @@ function resolveAvatarUrl(url) {
 
 function validateNickname() {
   const value = profileForm.nickname.trim()
-  if (!value) return (profileErrors.nickname = '昵称不能为空')
-  if (value.length > 20) return (profileErrors.nickname = '昵称最多 20 个字符')
+  if (!value) return (profileErrors.nickname = t('settings.nicknameRequired'))
+  if (value.length > 20) return (profileErrors.nickname = t('settings.nicknameTooLong'))
   profileErrors.nickname = ''
   return ''
 }
 function validateEmail() {
   const value = profileForm.email.trim()
-  if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return (profileErrors.email = '邮箱格式不正确')
+  if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return (profileErrors.email = t('settings.emailInvalid'))
   profileErrors.email = ''
   return ''
 }
 function validatePhone() {
   const value = profileForm.phone.trim()
-  if (value && !/^1\d{10}$/.test(value)) return (profileErrors.phone = '手机号格式不正确')
+  if (value && !/^1\d{10}$/.test(value)) return (profileErrors.phone = t('settings.phoneInvalid'))
   profileErrors.phone = ''
   return ''
 }
 function validateOldPassword() {
-  if (!passwordForm.oldPassword.trim()) return (passwordErrors.oldPassword = '请输入当前密码')
+  if (!passwordForm.oldPassword.trim()) return (passwordErrors.oldPassword = t('settings.oldPasswordRequired'))
   passwordErrors.oldPassword = ''
   return ''
 }
 function validateNewPassword() {
   const value = passwordForm.newPassword.trim()
-  if (!value) return (passwordErrors.newPassword = '请输入新密码')
-  if (value.length < 6 || value.length > 32) return (passwordErrors.newPassword = '新密码长度需为 6-32 位')
+  if (!value) return (passwordErrors.newPassword = t('settings.newPasswordRequired'))
+  if (value.length < 6 || value.length > 32) return (passwordErrors.newPassword = t('settings.newPasswordRule'))
   passwordErrors.newPassword = ''
   return ''
 }
 function validateConfirmPassword() {
   const value = passwordForm.confirmPassword.trim()
-  if (!value) return (passwordErrors.confirmPassword = '请确认新密码')
-  if (value !== passwordForm.newPassword.trim()) return (passwordErrors.confirmPassword = '两次输入的新密码不一致')
+  if (!value) return (passwordErrors.confirmPassword = t('settings.confirmNewPasswordRequired'))
+  if (value !== passwordForm.newPassword.trim()) return (passwordErrors.confirmPassword = t('settings.newPasswordNotMatch'))
   passwordErrors.confirmPassword = ''
   return ''
 }
@@ -163,7 +165,7 @@ function fillProfile(user = {}) {
 
 async function loadProfile() {
   if (!store.isLoggedIn) {
-    store.notify('请先登录', 'error')
+    store.notify(t('settings.loginFirst'), 'error')
     router.push('/login')
     return
   }
@@ -192,9 +194,9 @@ async function compressImage(file) {
     const ctx = canvas.getContext('2d')
     ctx.drawImage(img, 0, 0, width, height)
     let blob = await canvasToBlob(canvas, 'image/jpeg', 0.86)
-    if (!blob) throw new Error('图片压缩失败')
+    if (!blob) throw new Error(t('settings.imageCompressFailed'))
     if (blob.size > 1024 * 1024) blob = await canvasToBlob(canvas, 'image/jpeg', 0.72)
-    if (!blob) throw new Error('图片压缩失败')
+    if (!blob) throw new Error(t('settings.imageCompressFailed'))
     return new File([blob], `avatar-${Date.now()}.jpg`, { type: 'image/jpeg' })
   } finally {
     URL.revokeObjectURL(imageUrl)
@@ -205,14 +207,14 @@ async function handleAvatarChange(event) {
   try {
     const file = event.target.files?.[0]
     if (!file) return
-    if (!String(file.type || '').startsWith('image/')) return store.notify('请选择图片文件', 'error')
-    if (file.size > 10 * 1024 * 1024) return store.notify('原图请控制在 10MB 以内', 'error')
+    if (!String(file.type || '').startsWith('image/')) return store.notify(t('settings.selectImage'), 'error')
+    if (file.size > 10 * 1024 * 1024) return store.notify(t('settings.avatarTooLarge'), 'error')
     const compressed = await compressImage(file)
     selectedAvatarFile.value = compressed
     avatarPreview.value = URL.createObjectURL(compressed)
-    store.notify('头像已压缩，保存资料后会一起上传')
+    store.notify(t('settings.avatarCompressed'))
   } catch (error) {
-    store.notify(error.message || '图片处理失败', 'error')
+    store.notify(error.message || t('settings.imageProcessFailed'), 'error')
   }
 }
 
@@ -233,9 +235,9 @@ async function saveProfile() {
       if (avatarInputRef.value) avatarInputRef.value.value = ''
       await store.loadUserProfile()
     }
-    store.notify(uploadedAvatarUrl ? '资料和头像都已保存' : '资料已保存')
+    store.notify(uploadedAvatarUrl ? t('settings.profileAndAvatarSaved') : t('settings.profileSaved'))
   } catch (error) {
-    store.notify(error.message || '保存失败', 'error')
+    store.notify(error.message || t('settings.saveFailed'), 'error')
   }
 }
 
@@ -246,11 +248,11 @@ async function savePassword() {
     passwordForm.oldPassword = ''
     passwordForm.newPassword = ''
     passwordForm.confirmPassword = ''
-    store.notify('密码修改成功，请重新登录')
+    store.notify(t('settings.passwordChanged'))
     await store.logout()
     router.push('/login')
   } catch (error) {
-    store.notify(error.message || '修改密码失败', 'error')
+    store.notify(error.message || t('settings.passwordChangeFailed'), 'error')
   }
 }
 
