@@ -55,8 +55,8 @@
         </div>
         <div v-if="!group.links.length" class="empty-box">当前分组还没有网址</div>
         <div v-else class="table-like">
-          <div class="table-row table-head"><span>名称</span><span>本地模式</span><span>外网模式</span><span>状态</span><span>操作</span></div>
-          <div class="table-row" v-for="link in group.links" :key="link.id" :class="{ 'item-disabled': !link.isEnabled }">
+          <div class="table-row table-head table-row-public-links"><span>名称</span><span>本地模式</span><span>外网模式</span><span>状态</span><span>操作</span></div>
+          <div class="table-row table-row-public-links" v-for="link in group.links" :key="link.id" :class="{ 'item-disabled': !link.isEnabled }">
             <span>{{ link.name }}</span>
             <span>{{ link.urlLocal }}</span>
             <span>{{ link.urlOnline }}</span>

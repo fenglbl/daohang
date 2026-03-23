@@ -326,6 +326,9 @@ button { cursor: pointer; color: inherit; }
 .table-row-search-engine {
   grid-template-columns: 120px 120px minmax(220px, 1.8fr) 80px 160px;
 }
+.table-row-public-links {
+  grid-template-columns: minmax(120px, 1fr) minmax(180px, 2fr) minmax(180px, 2fr) 80px 160px;
+}
 .empty-box { padding: 18px; border: 1px dashed var(--line); border-radius: 16px; }
 .auth-footnote { margin-top: 18px; text-align: center; }
 .auth-footnote a { color: var(--primary-strong); text-decoration: none; }
