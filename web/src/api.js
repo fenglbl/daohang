@@ -51,6 +51,21 @@ export const api = {
   logout() {
     return request('/auth/logout', { method: 'POST' })
   },
+  getSearchEngines() {
+    return request('/search-engines')
+  },
+  getAdminSearchEngines() {
+    return request('/search-engines/admin')
+  },
+  createSearchEngine(payload) {
+    return request('/search-engines', { method: 'POST', body: JSON.stringify(payload) })
+  },
+  updateSearchEngine(id, payload) {
+    return request(`/search-engines/${id}`, { method: 'PUT', body: JSON.stringify(payload) })
+  },
+  deleteSearchEngine(id) {
+    return request(`/search-engines/${id}`, { method: 'DELETE' })
+  },
   getPublicGroups() {
     return request('/nav/public/groups')
   },

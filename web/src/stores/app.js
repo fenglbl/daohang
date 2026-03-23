@@ -34,6 +34,7 @@ export const useAppStore = defineStore('app', {
     token: localStorage.getItem('token') || '',
     currentUser: JSON.parse(localStorage.getItem('currentUser') || 'null'),
     navGroups: [],
+    searchEngines: [],
     notices: [],
     confirmDialog: {
       visible: false,
@@ -44,6 +45,7 @@ export const useAppStore = defineStore('app', {
       type: 'danger',
     },
     loading: false,
+    avatarVersion: localStorage.getItem('avatarVersion') || '',
   }),
   getters: {
     isAdmin: (state) => state.currentUser?.role === 'admin',
@@ -51,12 +53,18 @@ export const useAppStore = defineStore('app', {
     canEditPrivateNav: (state) => !!state.token && state.currentUser?.role !== 'admin' && state.editMode,
     publicGroups: (state) => state.showPublicNav ? state.navGroups.filter((item) => item.isPublic) : [],
     privateGroups: (state) => state.navGroups.filter((item) => !item.isPublic),
+    enabledSearchEngines: (state) => state.searchEngines.filter((item) => Number(item.is_enabled) === 1 || item.is_enabled === true),
   },
   actions: {
     setThemeMode(mode) {
       this.themeMode = mode
       localStorage.setItem('themeMode', mode)
       this.applyTheme()
+    },
+    async syncThemeMode(mode) {
+      this.setThemeMode(mode)
+      if (!this.isLoggedIn) return
+      await api.updateSettings({ themeMode: mode })
     },
     applyTheme() {
       const root = document.documentElement
@@ -68,6 +76,11 @@ export const useAppStore = defineStore('app', {
       this.jumpMode = mode
       localStorage.setItem('jumpMode', mode)
     },
+    async syncJumpMode(mode) {
+      this.setJumpMode(mode)
+      if (!this.isLoggedIn) return
+      await api.updateSettings({ jumpMode: mode })
+    },
     setEditMode(enabled) {
       this.editMode = !!enabled
       localStorage.setItem('editMode', this.editMode ? '1' : '0')
@@ -75,6 +88,10 @@ export const useAppStore = defineStore('app', {
     setShowPublicNav(enabled) {
       this.showPublicNav = !!enabled
       localStorage.setItem('showPublicNav', this.showPublicNav ? '1' : '0')
+    },
+    bumpAvatarVersion() {
+      this.avatarVersion = String(Date.now())
+      localStorage.setItem('avatarVersion', this.avatarVersion)
     },
     async toggleShowPublicNav() {
       const nextValue = !this.showPublicNav
@@ -132,7 +149,7 @@ export const useAppStore = defineStore('app', {
       localStorage.setItem('currentUser', JSON.stringify(this.currentUser))
       if (result.data.user?.role === 'admin') this.setEditMode(false)
       await this.loadUserProfile()
-      await this.fetchNavData()
+      await Promise.all([this.fetchNavData(), this.fetchSearchEngines()])
       return result.data.user
     },
     async register(payload) {
@@ -140,9 +157,11 @@ export const useAppStore = defineStore('app', {
     },
     async loadUserProfile() {
       if (!this.token) return
+      const previousAvatarUrl = this.currentUser?.avatar_url || ''
       const result = await api.me()
       this.currentUser = result.data
       localStorage.setItem('currentUser', JSON.stringify(this.currentUser))
+      if ((result.data?.avatar_url || '') !== previousAvatarUrl) this.bumpAvatarVersion()
       if (result.data?.role === 'admin') this.setEditMode(false)
       if (result.data?.theme_mode) this.setThemeMode(result.data.theme_mode)
       if (result.data?.jump_mode) this.setJumpMode(result.data.jump_mode)
@@ -159,7 +178,7 @@ export const useAppStore = defineStore('app', {
       this.setShowPublicNav(true)
       localStorage.removeItem('token')
       localStorage.removeItem('currentUser')
-      await this.fetchNavData()
+      await Promise.all([this.fetchNavData(), this.fetchSearchEngines()])
     },
     async updateCurrentUserProfile(payload) {
       const result = await api.updateProfile(payload)
@@ -169,6 +188,23 @@ export const useAppStore = defineStore('app', {
     },
     async updateCurrentUserPassword(payload) {
       return api.updatePassword(payload)
+    },
+    async fetchSearchEngines(admin = false) {
+      const result = admin ? await api.getAdminSearchEngines() : await api.getSearchEngines()
+      this.searchEngines = result.data || []
+      return this.searchEngines
+    },
+    async createSearchEngine(payload) {
+      await api.createSearchEngine(payload)
+      await this.fetchSearchEngines(true)
+    },
+    async updateSearchEngine(id, payload) {
+      await api.updateSearchEngine(id, payload)
+      await this.fetchSearchEngines(true)
+    },
+    async removeSearchEngine(id) {
+      await api.deleteSearchEngine(id)
+      await this.fetchSearchEngines(true)
     },
     async fetchNavData() {
       this.loading = true
@@ -196,19 +232,6 @@ export const useAppStore = defineStore('app', {
       await api.deleteGroup(groupId)
       await this.fetchNavData()
     },
-    async moveGroup(groupId, isPublic = false, direction = 'up') {
-      const list = this.navGroups.filter((item) => item.isPublic === !!isPublic)
-      const index = list.findIndex((item) => Number(item.id) === Number(groupId))
-      if (index === -1) return
-      const targetIndex = direction === 'up' ? index - 1 : index + 1
-      if (targetIndex < 0 || targetIndex >= list.length) return
-      const reordered = [...list]
-      ;[reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]]
-      for (let i = 0; i < reordered.length; i += 1) {
-        await api.updateGroup(reordered[i].id, { sortOrder: i + 1 })
-      }
-      await this.fetchNavData()
-    },
     async addLink(groupId, link, isPublic = false) {
       await api.createLink({
         groupId,
@@ -226,21 +249,6 @@ export const useAppStore = defineStore('app', {
     },
     async removeLink(linkId) {
       await api.deleteLink(linkId)
-      await this.fetchNavData()
-    },
-    async moveLink(linkId, groupId, isPublic = false, direction = 'up') {
-      const group = this.navGroups.find((item) => Number(item.id) === Number(groupId) && item.isPublic === !!isPublic)
-      if (!group) return
-      const list = group.links || []
-      const index = list.findIndex((item) => Number(item.id) === Number(linkId))
-      if (index === -1) return
-      const targetIndex = direction === 'up' ? index - 1 : index + 1
-      if (targetIndex < 0 || targetIndex >= list.length) return
-      const reordered = [...list]
-      ;[reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]]
-      for (let i = 0; i < reordered.length; i += 1) {
-        await api.updateLink(reordered[i].id, { sortOrder: i + 1 })
-      }
       await this.fetchNavData()
     },
   },

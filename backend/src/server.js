@@ -6,6 +6,7 @@ require('dotenv').config()
 const rootRouter = require('./routes')
 const authRouter = require('./routes/auth')
 const navRouter = require('./routes/nav')
+const searchEngineRouter = require('./routes/searchEngine')
 const { ok, fail } = require('./utils/response')
 const { checkDbConnection } = require('./config/db')
 const { ensureSchema, ensureAdminAccount } = require('./services/initService')
@@ -31,6 +32,7 @@ app.get('/health', async (req, res) => {
 app.use('/api', rootRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/nav', navRouter)
+app.use('/api/search-engines', searchEngineRouter)
 
 app.use((req, res) => {
   fail(res, '接口不存在', 404)

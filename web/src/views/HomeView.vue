@@ -3,10 +3,10 @@
     <div class="hero-floating-tools">
       <div class="hero-toolbar hero-toolbar-tight">
         <div class="mini-group">
-          <button v-for="item in themes" :key="item.value" class="mini-btn" :class="{ active: store.themeMode === item.value }" @click="store.setThemeMode(item.value)">{{ item.label }}</button>
+          <button v-for="item in themes" :key="item.value" class="mini-btn" :class="{ active: store.themeMode === item.value }" @click="setTheme(item.value)">{{ item.label }}</button>
         </div>
         <div class="mini-group">
-          <button v-for="item in jumps" :key="item.value" class="mini-btn" :class="{ active: store.jumpMode === item.value }" @click="store.setJumpMode(item.value)">{{ item.label }}</button>
+          <button v-for="item in jumps" :key="item.value" class="mini-btn" :class="{ active: store.jumpMode === item.value }" @click="setJump(item.value)">{{ item.label }}</button>
         </div>
         <div v-if="store.isLoggedIn && !store.isAdmin" class="mini-group">
           <span class="mini-group-label">编辑模式</span>
@@ -102,12 +102,12 @@
           </div>
         </div>
         <div class="link-grid">
-          <div v-for="link in group.links" :key="link.id" class="link-card" :class="{ 'link-card-editable': store.canEditPrivateNav }">
+          <div v-for="link in group.links" :key="link.id" class="private-link-shell" :class="{ 'link-card-editable': store.canEditPrivateNav }">
             <div v-if="store.canEditPrivateNav" class="link-actions">
               <button class="mini-btn" @click="openLinkModal('edit', group, link)">编辑</button>
               <button class="mini-btn danger-btn" @click="removeLink(link.id)">删除</button>
             </div>
-            <button class="link-card link-card-inner" @click="openLink(link)">
+            <button class="link-card" :class="{ 'link-card-inner': store.canEditPrivateNav }" @click="openLink(link)">
               <strong>{{ link.name }}</strong>
               <span>{{ link.desc }}</span>
               <small>{{ currentUrl(link) }}</small>
@@ -180,7 +180,6 @@ const editingGroupId = ref(null)
 const editingLinkId = ref(null)
 const groupForm = reactive({ title: '', desc: '' })
 const linkForm = reactive({ groupId: '', name: '', desc: '', urlLocal: '', urlOnline: '' })
-const engines = [{ label: 'Bing', value: 'bing' }, { label: '百度', value: 'baidu' }, { label: 'Google', value: 'google' }]
 const themes = [{ label: '夜间', value: 'dark' }, { label: '白天', value: 'light' }, { label: '跟随系统', value: 'system' }]
 const jumps = [{ label: '本地模式', value: 'local' }, { label: '外网模式', value: 'online' }]
 
@@ -189,15 +188,23 @@ const filteredPrivateGroups = computed(() => filterGroups(store.privateGroups))
 const displayName = computed(() => store.currentUser?.nickname || store.currentUser?.username || '我的账号')
 const avatarFallback = computed(() => String(displayName.value || '我').trim().slice(0, 1).toUpperCase())
 const resolvedAvatarUrl = computed(() => resolveAssetUrl(store.currentUser?.avatar_url || ''))
+const engines = computed(() => store.enabledSearchEngines.map((item) => ({ label: item.label, value: item.name, searchUrl: item.search_url })))
 
 watch(() => store.currentUser?.avatar_url, () => {
   avatarLoadFailed.value = false
 })
+watch(engines, (next) => {
+  if (!next.length) return
+  if (!next.some((item) => item.value === currentEngine.value)) {
+    currentEngine.value = next[0].value
+  }
+}, { immediate: true })
 
 function resolveAssetUrl(url) {
   if (!url) return ''
-  if (/^https?:\/\//i.test(url)) return url
-  return `http://127.0.0.1:3000${url}`
+  const version = store.avatarVersion ? `?v=${encodeURIComponent(store.avatarVersion)}` : ''
+  if (/^https?:\/\//i.test(url)) return `${url}${url.includes('?') ? '&' : '?'}v=${encodeURIComponent(store.avatarVersion || '')}`
+  return `http://127.0.0.1:3000${url}${version}`
 }
 
 function handleAvatarError() {
@@ -217,10 +224,27 @@ function filterGroups(groups) {
 
 function currentUrl(link) { return store.jumpMode === 'local' ? link.urlLocal : link.urlOnline }
 function openLink(link) { window.open(currentUrl(link), '_blank') }
+async function setTheme(mode) {
+  try {
+    await store.syncThemeMode(mode)
+  } catch (error) {
+    store.notify(error.message || '主题模式保存失败', 'error')
+  }
+}
+async function setJump(mode) {
+  try {
+    await store.syncJumpMode(mode)
+  } catch (error) {
+    store.notify(error.message || '跳转模式保存失败', 'error')
+  }
+}
 function doSearch() {
-  const q = keyword.value.trim(); if (!q) return
-  const map = { bing: `https://www.bing.com/search?q=${encodeURIComponent(q)}`, baidu: `https://www.baidu.com/s?wd=${encodeURIComponent(q)}`, google: `https://www.google.com/search?q=${encodeURIComponent(q)}` }
-  window.open(map[currentEngine.value], '_blank')
+  const q = keyword.value.trim()
+  if (!q) return
+  const engine = engines.value.find((item) => item.value === currentEngine.value) || engines.value[0]
+  if (!engine?.searchUrl) return store.notify('当前没有可用的搜索引擎', 'error')
+  const url = engine.searchUrl.replace('{q}', encodeURIComponent(q))
+  window.open(url, '_blank')
 }
 function toggleUserMenu() {
   showUserMenu.value = !showUserMenu.value
@@ -236,10 +260,6 @@ async function togglePublicNavVisible() {
   } finally {
     closeUserMenu()
   }
-}
-function comingSoon(label) {
-  store.notify(`${label}入口先给你预留好了，下一步我再接`, 'success')
-  closeUserMenu()
 }
 function goSettings() {
   closeUserMenu()
@@ -349,9 +369,10 @@ async function removeGroup(id) {
 onMounted(async () => {
   document.addEventListener('click', handleClickOutside)
   try {
-    if (store.isLoggedIn) {
-      await store.loadUserProfile()
-    }
+    await Promise.all([
+      store.fetchSearchEngines(),
+      store.isLoggedIn ? store.loadUserProfile() : Promise.resolve(),
+    ])
     await store.fetchNavData()
   } catch (_) {}
 })
