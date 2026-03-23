@@ -37,6 +37,8 @@ const messages = {
       zhCN: '中文',
       enUS: 'English',
       switched: '语言已切换为中文',
+      zhDesc: '简体中文界面',
+      enDesc: 'English interface',
     },
     theme: {
       dark: '夜间',
@@ -266,6 +268,8 @@ const messages = {
       zhCN: '中文',
       enUS: 'English',
       switched: 'Language switched to English',
+      zhDesc: 'Simplified Chinese interface',
+      enDesc: 'English interface',
     },
     theme: {
       dark: 'Dark',
