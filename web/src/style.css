@@ -212,6 +212,21 @@ button { cursor: pointer; color: inherit; }
 .avatar-upload-box {
   display: flex; align-items: center; gap: 16px; padding: 14px 16px; border: 1px dashed var(--line); border-radius: 18px;
 }
+.avatar-upload-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+.avatar-file-input {
+  display: none;
+}
+.avatar-file-name {
+  color: var(--subtext);
+  line-height: 1.5;
+  word-break: break-all;
+}
 .settings-avatar-preview {
   width: 72px; height: 72px; border-radius: 999px; object-fit: cover; flex-shrink: 0;
   border: 1px solid rgba(59, 130, 246, 0.14); background: rgba(59,130,246,0.08);
