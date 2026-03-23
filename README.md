@@ -351,8 +351,8 @@ const API_BASE = 'http://127.0.0.1:3000/api'
 
 ## License
 
-当前仓库未单独声明 License。
-如需开源发布，建议补充 LICENSE 文件。
+本项目采用 **MIT License**。
+详见根目录 `LICENSE` 文件。
 
 ---
 
