@@ -251,6 +251,36 @@ button { cursor: pointer; color: inherit; }
 .admin-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-bottom: 18px; }
 .group-list { display: grid; gap: 18px; margin-top: 20px; }
 .group-card { padding: 20px; border-radius: 22px; background: var(--panel-strong); border: 1px solid var(--line); }
+.item-disabled {
+  opacity: 0.62;
+  filter: grayscale(0.22);
+}
+.item-disabled .link-card,
+.item-disabled .table-row,
+.table-row.item-disabled,
+.group-card.item-disabled {
+  background: color-mix(in srgb, var(--panel-strong) 82%, var(--bg));
+  border-color: color-mix(in srgb, var(--line) 70%, transparent);
+}
+.item-disabled h3,
+.item-disabled strong,
+.item-disabled .table-actions,
+.item-disabled .group-actions {
+  color: color-mix(in srgb, var(--text) 70%, var(--subtext));
+}
+.item-disabled span,
+.item-disabled small {
+  color: color-mix(in srgb, var(--subtext) 88%, transparent);
+}
+.item-disabled .mini-btn,
+.item-disabled .danger-btn {
+  opacity: 1;
+}
+.item-disabled .link-card:hover,
+.group-card.item-disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
 .group-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
 .link-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
 .link-card {
