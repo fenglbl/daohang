@@ -2,7 +2,7 @@
   <main class="page-body">
     <div v-if="$route.name !== 'home'" class="page-logo" @click="$router.push('/')">
       <div class="page-logo-icon">导</div>
-      <span>导航站</span>
+      <span>{{ t('app.logo') }}</span>
     </div>
     <router-view />
 
@@ -31,8 +31,10 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useAppStore } from './stores/app'
+import { useI18n } from './i18n'
 
 const store = useAppStore()
+const { t } = useI18n()
 
 onMounted(() => {
   store.applyTheme()

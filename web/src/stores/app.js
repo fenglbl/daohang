@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { api } from '../api'
+import { getLocale, setLocale as applyLocale, t } from '../i18n'
 
 function mapNav(groups = [], links = []) {
   return groups.map((group) => ({
@@ -33,6 +34,7 @@ export const useAppStore = defineStore('app', {
   state: () => ({
     themeMode: localStorage.getItem('themeMode') || 'system',
     jumpMode: localStorage.getItem('jumpMode') || 'online',
+    locale: getLocale(),
     editMode: localStorage.getItem('editMode') === '1',
     showPublicNav: localStorage.getItem('showPublicNav') !== '0',
     token: localStorage.getItem('token') || '',
@@ -42,10 +44,10 @@ export const useAppStore = defineStore('app', {
     notices: [],
     confirmDialog: {
       visible: false,
-      title: '请确认',
+      title: t('app.confirmTitle'),
       message: '',
-      confirmText: '确认',
-      cancelText: '取消',
+      confirmText: t('common.confirm'),
+      cancelText: t('common.cancel'),
       type: 'danger',
     },
     loading: false,
@@ -60,6 +62,13 @@ export const useAppStore = defineStore('app', {
     enabledSearchEngines: (state) => state.searchEngines.filter((item) => Number(item.is_enabled) === 1 || item.is_enabled === true),
   },
   actions: {
+    setLocale(locale, options = {}) {
+      this.locale = locale
+      applyLocale(locale)
+      if (!options.silent) {
+        this.notify(t('language.switched'))
+      }
+    },
     setThemeMode(mode) {
       this.themeMode = mode
       localStorage.setItem('themeMode', mode)
@@ -107,7 +116,7 @@ export const useAppStore = defineStore('app', {
           if (this.currentUser) this.currentUser.show_public_nav = nextValue ? 1 : 0
           localStorage.setItem('currentUser', JSON.stringify(this.currentUser))
         }
-        this.notify(nextValue ? '已开启公共导航' : '已关闭公共导航')
+        this.notify(nextValue ? t('home.publicNavOn') : t('home.publicNavOff'))
       } catch (error) {
         this.setShowPublicNav(oldValue)
         throw error
@@ -115,7 +124,7 @@ export const useAppStore = defineStore('app', {
     },
     toggleEditMode() {
       this.setEditMode(!this.editMode)
-      this.notify(this.editMode ? '已开启编辑模式' : '已关闭编辑模式')
+      this.notify(this.editMode ? t('home.editModeOn') : t('home.editModeOff'))
     },
     notify(message, type = 'success') {
       const id = noticeSeed++
@@ -128,10 +137,10 @@ export const useAppStore = defineStore('app', {
     openConfirm(options = {}) {
       this.confirmDialog = {
         visible: true,
-        title: options.title || '请确认',
+        title: options.title || t('app.confirmTitle'),
         message: options.message || '',
-        confirmText: options.confirmText || '确认',
-        cancelText: options.cancelText || '取消',
+        confirmText: options.confirmText || t('common.confirm'),
+        cancelText: options.cancelText || t('common.cancel'),
         type: options.type || 'danger',
       }
       return new Promise((resolve) => {

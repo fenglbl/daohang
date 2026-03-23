@@ -126,6 +126,15 @@ button { cursor: pointer; color: inherit; }
 :root[data-theme='dark'] .mini-userbox { background: rgba(17,24,39,0.62); }
 .mini-btn, .mini-primary-btn { padding: 6px 9px; border-radius: 999px; font-size: 11px; line-height: 1; min-height: 28px; }
 .mini-userbox span, .mini-group-label { padding: 0 6px; font-size: 11px; color: var(--subtext); }
+.language-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+.language-dropdown-menu {
+  width: 220px;
+}
 .user-avatar {
   width: 24px; height: 24px; border-radius: 999px; object-fit: cover; flex-shrink: 0;
   border: 1px solid rgba(59, 130, 246, 0.16);

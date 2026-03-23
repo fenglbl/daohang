@@ -2,6 +2,20 @@
   <section class="hero-panel hero-panel-compact">
     <div class="hero-floating-tools">
       <div class="hero-toolbar hero-toolbar-tight">
+        <div class="mini-group language-switch" ref="languageDropdownRef">
+          <span class="mini-group-label">语言</span>
+          <button class="mini-btn" @click="toggleLanguageMenu">{{ currentLanguageLabel }}</button>
+          <div v-if="showLanguageMenu" class="user-dropdown-menu language-dropdown-menu">
+            <button class="dropdown-item" @click="changeLocale('zh-CN')">
+              <span>中文</span>
+              <small>简体中文界面</small>
+            </button>
+            <button class="dropdown-item" @click="changeLocale('en-US')">
+              <span>English</span>
+              <small>English interface</small>
+            </button>
+          </div>
+        </div>
         <div class="mini-group">
           <button v-for="item in themes" :key="item.value" class="mini-btn" :class="{ active: store.themeMode === item.value }" @click="setTheme(item.value)">{{ item.label }}</button>
         </div>
@@ -164,15 +178,19 @@
 import { computed, onMounted, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
+import { useI18n } from '../i18n'
 
 const router = useRouter()
 const store = useAppStore()
+const { state: i18nState } = useI18n()
 const keyword = ref('')
 const currentEngine = ref('bing')
 const showGroupModal = ref(false)
 const showLinkModal = ref(false)
 const showUserMenu = ref(false)
+const showLanguageMenu = ref(false)
 const userDropdownRef = ref(null)
+const languageDropdownRef = ref(null)
 const avatarLoadFailed = ref(false)
 const groupModalMode = ref('create')
 const linkModalMode = ref('create')
@@ -187,6 +205,7 @@ const filteredPublicGroups = computed(() => filterGroups(store.publicGroups, fal
 const filteredPrivateGroups = computed(() => filterGroups(store.privateGroups, false))
 const displayName = computed(() => store.currentUser?.nickname || store.currentUser?.username || '我的账号')
 const avatarFallback = computed(() => String(displayName.value || '我').trim().slice(0, 1).toUpperCase())
+const currentLanguageLabel = computed(() => i18nState.locale === 'en-US' ? 'English' : '中文')
 const resolvedAvatarUrl = computed(() => resolveAssetUrl(store.currentUser?.avatar_url || ''))
 const engines = computed(() => store.enabledSearchEngines.map((item) => ({ label: item.label, value: item.name, searchUrl: item.search_url })))
 
@@ -258,6 +277,16 @@ function doSearch() {
 function toggleUserMenu() {
   showUserMenu.value = !showUserMenu.value
 }
+function toggleLanguageMenu() {
+  showLanguageMenu.value = !showLanguageMenu.value
+}
+function closeLanguageMenu() {
+  showLanguageMenu.value = false
+}
+async function changeLocale(locale) {
+  store.setLocale(locale)
+  closeLanguageMenu()
+}
 function closeUserMenu() {
   showUserMenu.value = false
 }
@@ -284,9 +313,11 @@ async function doLogout() {
   router.push('/')
 }
 function handleClickOutside(event) {
-  if (!showUserMenu.value) return
-  if (!userDropdownRef.value?.contains(event.target)) {
+  if (showUserMenu.value && !userDropdownRef.value?.contains(event.target)) {
     closeUserMenu()
+  }
+  if (showLanguageMenu.value && !languageDropdownRef.value?.contains(event.target)) {
+    closeLanguageMenu()
   }
 }
 
