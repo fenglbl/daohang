@@ -4,6 +4,10 @@ function getLocale() {
   return localStorage.getItem('locale') || 'zh-CN'
 }
 
+function getDefaultErrorMessage() {
+  return getLocale() === 'en-US' ? 'Request failed' : '请求失败'
+}
+
 async function request(path, options = {}) {
   const token = localStorage.getItem('token')
   const headers = {
@@ -24,7 +28,7 @@ async function request(path, options = {}) {
 
   const data = await response.json()
   if (!response.ok || data.success === false) {
-    throw new Error(data.message || '请求失败')
+    throw new Error(data.message || getDefaultErrorMessage())
   }
   return data
 }

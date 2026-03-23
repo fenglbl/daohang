@@ -92,7 +92,7 @@ const profileErrors = reactive({ nickname: '', email: '', phone: '' })
 const passwordErrors = reactive({ oldPassword: '', newPassword: '', confirmPassword: '' })
 
 const avatarFallback = computed(() => {
-  const name = profileForm.nickname || profileForm.username || '我'
+  const name = profileForm.nickname || profileForm.username || t('home.avatarFallback')
   return String(name).trim().slice(0, 1).toUpperCase()
 })
 const selectedAvatarSizeLabel = computed(() => {
