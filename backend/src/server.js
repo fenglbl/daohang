@@ -23,9 +23,9 @@ app.use('/avatars', express.static(avatarDir))
 app.get('/health', async (req, res) => {
   try {
     await checkDbConnection()
-    ok(res, { db: 'connected' }, '服务正常，数据库已连接')
+    ok(res, { db: 'connected' }, '服务正常，数据库已连接', req)
   } catch (error) {
-    ok(res, { db: 'disconnected', error: error.message }, '服务正常，数据库暂未连接')
+    ok(res, { db: 'disconnected', error: error.message }, '服务正常，数据库暂未连接', req)
   }
 })
 
@@ -35,12 +35,12 @@ app.use('/api/nav', navRouter)
 app.use('/api/search-engines', searchEngineRouter)
 
 app.use((req, res) => {
-  fail(res, '接口不存在', 404)
+  fail(res, '接口不存在', 404, null, req)
 })
 
 app.use((error, req, res, next) => {
   console.error('[server error]', error)
-  fail(res, '服务器内部错误', 500, error.message)
+  fail(res, '服务器内部错误', 500, error.message, req)
 })
 
 async function bootstrap() {
