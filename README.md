@@ -164,6 +164,7 @@ MYSQL_DATABASE=daohang
 数据库设计说明：
 
 - `backend/docs/database-design.md`
+- `backend/docs/api.md`
 
 ### 建议初始化方式
 
